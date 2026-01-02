@@ -616,6 +616,9 @@ class _GameSceneState extends State<GameScene> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isLandscape = size.width > size.height;
+
     return Stack(
       children: [
         KeyboardListener(
@@ -632,19 +635,24 @@ class _GameSceneState extends State<GameScene> {
             color: Colors.white,
             child: const Center(child: CircularProgressIndicator()),
           ),
-        if (_initialized) ...[
-          Positioned(top: 20, left: 20, child: _buildInfoPanel()),
-          Positioned(top: 20, right: 20, child: _buildSpeedometer()),
-          Positioned(
-            top: 40,
-            left: 0,
-            right: 0,
-            child: Center(child: _buildNavigationArrow()),
+        if (_initialized)
+          SafeArea(
+            child: Stack(
+              children: [
+                Positioned(top: 20, left: 20, child: _buildInfoPanel()),
+                Positioned(top: 20, right: 20, child: _buildSpeedometer()),
+                Positioned(
+                  top: isLandscape ? 10 : 40,
+                  left: 0,
+                  right: 0,
+                  child: Center(child: _buildNavigationArrow()),
+                ),
+                if (_isGoalReached) _buildGoalOverlay(),
+                if (_isGameOver) _buildGameOverOverlay(),
+                _buildTouchControls(isLandscape),
+              ],
+            ),
           ),
-          if (_isGoalReached) _buildGoalOverlay(),
-          if (_isGameOver) _buildGameOverOverlay(),
-          _buildTouchControls(),
-        ],
       ],
     );
   }
@@ -822,13 +830,13 @@ class _GameSceneState extends State<GameScene> {
     ),
   );
 
-  Widget _buildTouchControls() {
+  Widget _buildTouchControls(bool isLandscape) {
     return Positioned(
-      bottom: 40,
+      bottom: isLandscape ? 20 : 40,
       left: 0,
       right: 0,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
+        padding: EdgeInsets.symmetric(horizontal: isLandscape ? 60 : 40),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
