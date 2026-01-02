@@ -189,9 +189,11 @@ class _GameSceneState extends State<GameScene> {
       _dirLight.intensity = 1.5;
     } else if (phase == 1) {
       // Evening
-      // Gradient effect: Blue sky background with Orange fog at horizon
-      _scene.background = three.Color(0.1, 0.3, 0.6);
-      _scene.fog = three.FogExp2(three.Color(0.9, 0.5, 0.2).getHex(), 0.00035);
+      _scene.background = three.Color(0.53, 0.81, 0.92);
+      _scene.fog = three.FogExp2(
+        three.Color(0.53, 0.81, 0.92).getHex(),
+        0.0002,
+      );
       _ambientLight.color = three.Color(0.6, 0.3, 0.2);
       _ambientLight.intensity = 0.3;
       _dirLight.color = three.Color(1.0, 0.5, 0.2);
@@ -722,6 +724,7 @@ class _GameSceneState extends State<GameScene> {
             child: _threeJs.build(),
           ),
         ),
+        if (_initialized) _buildSpeedEffect(),
         if (!_initialized)
           Container(
             color: Colors.white,
@@ -854,6 +857,20 @@ class _GameSceneState extends State<GameScene> {
           style: const TextStyle(color: Colors.white, fontSize: 14),
         ),
       ],
+    );
+  }
+
+  Widget _buildSpeedEffect() {
+    // Start effect at speed 30, max at 80
+    if (_speed < 30.0) return const SizedBox.shrink();
+
+    double intensity = ((_speed - 30.0) / 50.0).clamp(0.0, 1.0);
+
+    return IgnorePointer(
+      child: CustomPaint(
+        painter: _SpeedLinesPainter(intensity: intensity),
+        size: Size.infinite,
+      ),
     );
   }
 
@@ -1044,4 +1061,40 @@ class _GameSceneState extends State<GameScene> {
       ),
     );
   }
+}
+
+class _SpeedLinesPainter extends CustomPainter {
+  final double intensity;
+
+  _SpeedLinesPainter({required this.intensity});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = math.min(size.width, size.height) / 2;
+    final innerRadius = radius * 0.4; // Clear center area
+    final outerRadius =
+        math.sqrt(size.width * size.width + size.height * size.height) / 2;
+
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(intensity * 0.3)
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final random = math.Random();
+    final count = (20 + 40 * intensity).toInt();
+
+    for (int i = 0; i < count; i++) {
+      final angle = random.nextDouble() * 2 * math.pi;
+      final dir = Offset(math.cos(angle), math.sin(angle));
+      final startDist =
+          innerRadius + random.nextDouble() * (radius - innerRadius);
+
+      paint.strokeWidth = (0.8 + random.nextDouble() * 2.0) * intensity;
+      canvas.drawLine(center + dir * startDist, center + dir * outerRadius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SpeedLinesPainter oldDelegate) => true;
 }
