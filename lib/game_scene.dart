@@ -784,6 +784,7 @@ class _GameSceneState extends State<GameScene> {
 
   Widget _buildSpeedometer() {
     double speedKmh = _speed * 1.2;
+    double speedAdjust = speedKmh / 3.0;
     double normalized = (speedKmh / 120.0 * 100).clamp(0, 100);
     return Container(
       width: 100,
@@ -808,7 +809,7 @@ class _GameSceneState extends State<GameScene> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                speedKmh.toStringAsFixed(1),
+                speedAdjust.toStringAsFixed(1),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
