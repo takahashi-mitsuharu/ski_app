@@ -62,6 +62,8 @@ class _GameSceneState extends State<GameScene> {
   final double _courseWidth = 100;
 
   late FocusNode _focusNode;
+  double _lastWidth = 0;
+  double _lastHeight = 0;
 
   @override
   void initState() {
@@ -115,6 +117,8 @@ class _GameSceneState extends State<GameScene> {
     );
     _threeJs.camera = _camera;
     _camera.position.setValues(0, 50, 50);
+    _lastWidth = _threeJs.width;
+    _lastHeight = _threeJs.height;
 
     final ambientLight = three.AmbientLight(0xffffff, 0.6);
     _scene.add(ambientLight);
@@ -135,6 +139,12 @@ class _GameSceneState extends State<GameScene> {
 
     _threeJs.addAnimationEvent((dt) {
       if (!_initialized) return;
+      if (_threeJs.width != _lastWidth || _threeJs.height != _lastHeight) {
+        _lastWidth = _threeJs.width;
+        _lastHeight = _threeJs.height;
+        _camera.aspect = _threeJs.width / _threeJs.height;
+        _camera.updateProjectionMatrix();
+      }
       _updatePhysics(dt);
       _updateCamera(dt);
       if (mounted) setState(() {});
