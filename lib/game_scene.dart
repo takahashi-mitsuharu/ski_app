@@ -48,6 +48,7 @@ class _GameSceneState extends State<GameScene> {
   // Goal State
   three.Vector3 _goalPos = three.Vector3(150, 0, -5000);
   bool _isGoalReached = false;
+  double _remainingTime = 120.0;
   bool _isGameOver = false;
   Timer? _restartTimer;
 
@@ -471,7 +472,13 @@ class _GameSceneState extends State<GameScene> {
 
     if (!_isGoalReached && !_isGameOver) {
       final dist = _playerGroup.position.distanceTo(_goalPos);
-      if (dist < 20.0) {
+
+      _remainingTime -= dt;
+      if (_remainingTime <= 0) {
+        _remainingTime = 0;
+        _isGameOver = true;
+        _startAutoRestart();
+      } else if (dist < 20.0) {
         _isGoalReached = true;
         _level++; // Progression
         _startAutoRestart();
@@ -497,6 +504,11 @@ class _GameSceneState extends State<GameScene> {
       _playerGroup.position.setValues(0, _getHeight(0, 0), 0);
       _velocity.setValues(0, 0, 0);
       _heading = math.pi;
+
+      // Time Limit Logic
+      double timeLimit = 120.0 - (_level - 1) * 5.0;
+      if (timeLimit < 80.0) timeLimit = 80.0;
+      _remainingTime = timeLimit;
 
       // Standardize goal distance to 5000, randomize X position per level
       final random = math.Random();
@@ -667,24 +679,38 @@ class _GameSceneState extends State<GameScene> {
     );
   }
 
-  Widget _buildInfoPanel() => Container(
-    padding: const EdgeInsets.all(8),
-    color: Colors.black54,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          'Level: $_level',
-          style: const TextStyle(
-            color: Colors.orangeAccent,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+  Widget _buildInfoPanel() {
+    int minutes = _remainingTime ~/ 60;
+    int seconds = (_remainingTime % 60).toInt();
+    String timeStr = '$minutes:${seconds.toString().padLeft(2, '0')}';
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      color: Colors.black54,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Level: $_level',
+            style: const TextStyle(
+              color: Colors.orangeAccent,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+          Text(
+            'Time: $timeStr',
+            style: TextStyle(
+              color: _remainingTime < 10.0 ? Colors.redAccent : Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildSpeedometer() {
     double speedKmh = _speed * 1.2;
@@ -804,9 +830,9 @@ class _GameSceneState extends State<GameScene> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            'GAME OVER',
-            style: TextStyle(
+          Text(
+            _remainingTime <= 0 ? 'TIME UP' : 'GAME OVER',
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 80,
               fontWeight: FontWeight.bold,
@@ -814,9 +840,9 @@ class _GameSceneState extends State<GameScene> {
               shadows: [Shadow(color: Colors.black, blurRadius: 10)],
             ),
           ),
-          const Text(
-            'You missed the goal!',
-            style: TextStyle(color: Colors.white, fontSize: 24),
+          Text(
+            _remainingTime <= 0 ? 'Out of time!' : 'You missed the goal!',
+            style: const TextStyle(color: Colors.white, fontSize: 24),
           ),
           const SizedBox(height: 10),
           const Text(
