@@ -19,6 +19,7 @@ class _GameSceneState extends State<GameScene> {
   late three.InstancedMesh _snowSpray;
   final int _maxSnowParticles = 300;
   int _snowParticleIndex = 0;
+
   int _level = 1;
 
   // Player parts
@@ -27,6 +28,10 @@ class _GameSceneState extends State<GameScene> {
 
   // Humanoid parts
   late three.Group _humanoid;
+
+  // Lighting
+  late three.AmbientLight _ambientLight;
+  late three.DirectionalLight _dirLight;
 
   // Track (Spur) system
   late three.InstancedMesh _spurMesh;
@@ -61,6 +66,10 @@ class _GameSceneState extends State<GameScene> {
   final double _terrainDepth = 12000;
   final int _terrainSegments = 200; // Optimized for performance
   final double _courseWidth = 100;
+
+  three.Mesh? _terrainMesh;
+  double _seedX = 0;
+  double _seedZ = 0;
 
   late FocusNode _focusNode;
   double _lastWidth = 0;
@@ -121,12 +130,12 @@ class _GameSceneState extends State<GameScene> {
     _lastWidth = _threeJs.width;
     _lastHeight = _threeJs.height;
 
-    final ambientLight = three.AmbientLight(0xffffff, 0.6);
-    _scene.add(ambientLight);
+    _ambientLight = three.AmbientLight(0xffffff, 0.1);
+    _scene.add(_ambientLight);
 
-    final dirLight = three.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.setValues(100, 200, 100);
-    _scene.add(dirLight);
+    _dirLight = three.DirectionalLight(0xffffff, 1.5);
+    _dirLight.position.setValues(100, 200, 100);
+    _scene.add(_dirLight);
 
     _createTerrain();
     _createTrees();
@@ -134,6 +143,7 @@ class _GameSceneState extends State<GameScene> {
     _createSnowSpraySystem();
     _createPlayer();
     _createGoalVisual();
+    _updateEnvironment();
 
     _initialized = true;
     if (mounted) setState(() {});
@@ -152,15 +162,65 @@ class _GameSceneState extends State<GameScene> {
     });
   }
 
+  void _updateEnvironment() {
+    int phase; // 0: Day, 1: Evening, 2: Night
+
+    // Cycle of 10 levels: 1-4 Day, 5-7 Evening, 8-10 Night
+    final cyclePos = (_level - 1) % 10;
+
+    if (cyclePos < 4) {
+      phase = 0;
+    } else if (cyclePos < 7) {
+      phase = 1;
+    } else {
+      phase = 2;
+    }
+
+    if (phase == 0) {
+      // Day
+      _scene.background = three.Color(0.53, 0.81, 0.92);
+      _scene.fog = three.FogExp2(
+        three.Color(0.53, 0.81, 0.92).getHex(),
+        0.0002,
+      );
+      _ambientLight.color = three.Color(1, 1, 1);
+      _ambientLight.intensity = 0.1;
+      _dirLight.color = three.Color(1, 1, 1);
+      _dirLight.intensity = 1.5;
+    } else if (phase == 1) {
+      // Evening
+      // Gradient effect: Blue sky background with Orange fog at horizon
+      _scene.background = three.Color(0.1, 0.3, 0.6);
+      _scene.fog = three.FogExp2(three.Color(0.9, 0.5, 0.2).getHex(), 0.00035);
+      _ambientLight.color = three.Color(0.6, 0.3, 0.2);
+      _ambientLight.intensity = 0.3;
+      _dirLight.color = three.Color(1.0, 0.5, 0.2);
+      _dirLight.intensity = 1.2;
+    } else {
+      // Night
+      _scene.background = three.Color(0.02, 0.02, 0.15);
+      _scene.fog = three.FogExp2(
+        three.Color(0.02, 0.02, 0.15).getHex(),
+        0.0003,
+      );
+      _ambientLight.color = three.Color(0.1, 0.1, 0.3);
+      _ambientLight.intensity = 0.4;
+      _dirLight.color = three.Color(0.3, 0.3, 0.6);
+      _dirLight.intensity = 0.6;
+    }
+  }
+
   double _getHeight(double x, double z) {
+    final nx = x + _seedX;
+    final nz = z + _seedZ;
     double baseSlope = z * 0.25;
     // Enhanced hills for better visibility
-    double hills = math.sin(x * 0.01) * 15.0 + math.cos(z * 0.01) * 15.0;
+    double hills = math.sin(nx * 0.01) * 15.0 + math.cos(nz * 0.01) * 15.0;
     // Enhanced moguls for better visibility
     double moguls =
-        math.sin(x * 0.08 + z * 0.04) * 2.0 +
-        math.cos(z * 0.1 - x * 0.03) * 2.5 +
-        math.sin(x * 0.2 + z * 0.2) * 0.5;
+        math.sin(nx * 0.08 + nz * 0.04) * 2.0 +
+        math.cos(nz * 0.1 - nx * 0.03) * 2.5 +
+        math.sin(nx * 0.2 + nz * 0.2) * 0.5;
     if (z < -3000) baseSlope += (z + 3000) * 0.3;
     return baseSlope + hills + moguls;
   }
@@ -177,6 +237,12 @@ class _GameSceneState extends State<GameScene> {
   }
 
   void _createTerrain() {
+    if (_terrainMesh != null) {
+      _scene.remove(_terrainMesh!);
+      _terrainMesh!.geometry?.dispose();
+      _terrainMesh = null;
+    }
+
     final geometry = three.PlaneGeometry(
       _terrainWidth,
       _terrainDepth,
@@ -196,7 +262,8 @@ class _GameSceneState extends State<GameScene> {
     }
     geometry.computeVertexNormals();
     final material = three.MeshLambertMaterial()..color = three.Color(1, 1, 1);
-    _scene.add(three.Mesh(geometry, material));
+    _terrainMesh = three.Mesh(geometry, material);
+    _scene.add(_terrainMesh!);
   }
 
   void _createTrees() {
@@ -505,13 +572,16 @@ class _GameSceneState extends State<GameScene> {
       _velocity.setValues(0, 0, 0);
       _heading = math.pi;
 
+      final random = math.Random();
+      _seedX = random.nextDouble() * 10000;
+      _seedZ = random.nextDouble() * 10000;
+
       // Time Limit Logic
       double timeLimit = 120.0 - (_level - 1) * 5.0;
       if (timeLimit < 80.0) timeLimit = 80.0;
       _remainingTime = timeLimit;
 
       // Standardize goal distance to 5000, randomize X position per level
-      final random = math.Random();
       final randomX = (random.nextDouble() - 0.5) * 2000;
       const dist = 5000.0;
       _goalPos = three.Vector3(randomX, _getHeight(randomX, -dist), -dist);
@@ -520,18 +590,18 @@ class _GameSceneState extends State<GameScene> {
       _scene.children
           .where(
             (c) =>
-                c is three.Group ||
-                (c is three.Mesh && c.geometry is three.CylinderGeometry),
+                c.position.z < -1000 && (c is three.Group || c is three.Mesh),
           )
           .forEach((c) {
-            // Find markers that are part of the goal visual (pillars or flags)
-            // They are usually positioned far down the slope
-            if (c.position.z < -1000) {
-              c.position.setFrom(_goalPos);
-              if (c.geometry is three.CylinderGeometry) c.position.y += 250;
+            c.position.setFrom(_goalPos);
+            // If it's the pillar (Mesh), adjust Y. The flag is a Group.
+            if (c is three.Mesh) {
+              c.position.y += 250;
             }
           });
     });
+    _updateEnvironment();
+    _createTerrain();
     _createTrees();
   }
 
