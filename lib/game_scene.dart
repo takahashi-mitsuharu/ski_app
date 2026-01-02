@@ -664,15 +664,6 @@ class _GameSceneState extends State<GameScene> {
             fontSize: 20,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Controls: Arrows or Screen Bottom to Turn',
-          style: const TextStyle(
-            color: Colors.white,
-            fontFamily: 'monospace',
-            fontSize: 14,
-          ),
-        ),
       ],
     ),
   );
