@@ -840,6 +840,30 @@ class _GameSceneState extends State<GameScene> {
     ),
   );
 
+  Future<void> _showRestartConfirmDialog() async {
+    final shouldRestart = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Restart Game'),
+        content: const Text('Are you sure you want to restart?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldRestart == true) {
+      _restartGame();
+    }
+  }
+
   Widget _buildTouchControls(bool isLandscape) {
     return Positioned(
       bottom: isLandscape ? 20 : 40,
@@ -854,6 +878,15 @@ class _GameSceneState extends State<GameScene> {
               isPressed: _leftPressed,
               onPressed: (val) => setState(() => _leftPressed = val),
               icon: Icons.arrow_back_ios_new,
+            ),
+            ElevatedButton(
+              onPressed: _showRestartConfirmDialog,
+              style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(),
+                padding: const EdgeInsets.all(16),
+                backgroundColor: Colors.white.withOpacity(0.8),
+              ),
+              child: const Icon(Icons.refresh, color: Colors.black87, size: 28),
             ),
             _buildRoundButton(
               isPressed: _rightPressed,
