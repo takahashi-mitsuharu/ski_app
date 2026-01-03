@@ -20,7 +20,7 @@ class _GameSceneState extends State<GameScene> {
   final int _maxSnowParticles = 300;
   int _snowParticleIndex = 0;
 
-  int _level = 1;
+  int _stage = 1;
 
   // Player parts
   late three.Mesh _leftSki;
@@ -166,7 +166,7 @@ class _GameSceneState extends State<GameScene> {
     int phase; // 0: Day, 1: Evening, 2: Night
 
     // Cycle of 10 levels: 1-4 Day, 5-7 Evening, 8-10 Night
-    final cyclePos = (_level - 1) % 10;
+    final cyclePos = (_stage - 1) % 10;
 
     if (cyclePos < 4) {
       phase = 0;
@@ -276,7 +276,7 @@ class _GameSceneState extends State<GameScene> {
       _treePositions.clear();
     }
 
-    final treeCount = 5000 + (_level - 1) * 5000;
+    final treeCount = 5000 + (_stage - 1) * 5000;
     final treeMat = three.MeshLambertMaterial()..vertexColors = true;
 
     final List<double> vertices = [], normals = [], colors = [];
@@ -549,7 +549,7 @@ class _GameSceneState extends State<GameScene> {
         _startAutoRestart();
       } else if (dist < 20.0) {
         _isGoalReached = true;
-        _level++; // Progression
+        _stage++; // Progression
         _startAutoRestart();
       } else if (_playerGroup.position.z < -5050) {
         // Passed the goal line
@@ -579,7 +579,7 @@ class _GameSceneState extends State<GameScene> {
       _seedZ = random.nextDouble() * 10000;
 
       // Time Limit Logic
-      double timeLimit = 120.0 - (_level - 1) * 5.0;
+      double timeLimit = 120.0 - (_stage - 1) * 5.0;
       if (timeLimit < 80.0) timeLimit = 80.0;
       _remainingTime = timeLimit;
 
@@ -765,7 +765,7 @@ class _GameSceneState extends State<GameScene> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Stage: $_level',
+            'Stage: $_stage',
             style: const TextStyle(
               color: Colors.orangeAccent,
               fontWeight: FontWeight.bold,
