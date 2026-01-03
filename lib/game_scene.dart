@@ -765,7 +765,7 @@ class _GameSceneState extends State<GameScene> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Level: $_level',
+            'Stage: $_level',
             style: const TextStyle(
               color: Colors.orangeAccent,
               fontWeight: FontWeight.bold,
@@ -1091,7 +1091,11 @@ class _SpeedLinesPainter extends CustomPainter {
           innerRadius + random.nextDouble() * (radius - innerRadius);
 
       paint.strokeWidth = (0.8 + random.nextDouble() * 2.0) * intensity;
-      canvas.drawLine(center + dir * startDist, center + dir * outerRadius, paint);
+      canvas.drawLine(
+        center + dir * startDist,
+        center + dir * outerRadius,
+        paint,
+      );
     }
   }
 
