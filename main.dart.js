@@ -60332,7 +60332,7 @@ if(!h.k1)d.push(A.lC(g,B.x7,B.I,B.i,g,g,g,g,g,g,g,g,g))
 if(h.k1){s=h.k4
 q=B.c.dJ(s,60)
 p=B.d.o4(B.f.m(B.c.af(B.c.bn(s,60))),2,"0")
-o=A.wf("Level: "+h.z,B.K9)
+o=A.wf("Stage: "+h.z,B.K9)
 p=A.Dk(g,A.lC(g,A.rv(A.c([o,A.wf("Time: "+(""+q+":"+p),A.po(g,g,s<10?B.hw:B.i,g,g,g,g,g,g,g,g,20,g,g,B.b4,g,g,!0,g,g,g,g,g,g,g,g))],r),B.bh,B.bT),B.I,B.v,g,g,g,g,g,B.z7,g,g,g),g,g,20,g,20,g)
 n=h.fy*1.2
 m=B.c.fe(n/120*100,0,100)
